@@ -44,7 +44,10 @@ module.exports = Organel.extend(function Imgsizer(plasma, config, parent){
   resolveImage: function(c, sender, callback) {
     var filepath = path.join(this.config.uploadsDir, c.target);
     var self = this;
-    if(c.width || c.height || c['max-width'] || c['max-height']) {
+    if(c.width || c.height)
+      self.resizeImage(c, sender, callback);
+    else
+    if(c['max-width'] || c['max-height'])
       im.identify(filepath, function(err, features){
         if( (c["max-width"] && parseInt(c["max-width"]) < features.width) ||
             (c["max-height"] && parseInt(c["max-height"]) < features.height) ){
@@ -54,12 +57,9 @@ module.exports = Organel.extend(function Imgsizer(plasma, config, parent){
             c.height = c["max-height"];
           self.resizeImage(c, sender, callback);
         } else
-        if(c.width || c.height)
-          self.resizeImage(c, sender, callback);
-        else
           if(callback) callback({data: filepath});
       })
-    } else
+    else
       if(callback) callback({data: filepath});
   },
   resizeImage: function(c, sender, callback) {

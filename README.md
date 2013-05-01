@@ -1,4 +1,4 @@
 organic-imgsizer
 ================
 
-Organelle for providing http access to images in differnt dimensions.
+Organelle for providing access to images stored within the filesystem in differnt dimensions.
