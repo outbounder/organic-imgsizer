@@ -15,44 +15,80 @@ module.exports = Organel.extend(function Imgsizer(plasma, config, parent){
   Organel.call(this, plasma, config, parent);
 
   var self = this;
+  if(this.config.cwd)
+    for(var key in this.config.cwd)
+      this.config[key] = path.join(process.cwd(), this.config.cwd[key]);
 
   this.config.uploadsDir = config.uploadsDir || process.cwd()+"/uploads";
   
   shelljs.mkdir('-p', this.config.uploadsDir);
 
+  this.on("Imgsizer:handleImage", this.handleImage);
+  this.on("Imgsizer:resolveImage", this.resolveImage);
+
 },{
   handleImage: function(c, sender, callback){
     var file = c.target;
     var dest = path.join(this.config.uploadsDir, path.basename(file.path));
-    
-    ncp(file.path, dest, function(err){
-      if(err) throw err;
-      file.path = dest;  
+    if(file.path !== dest)
+      ncp(file.path, dest, function(err){
+        if(err) throw err;
+        file.path = path.basename(file.path);  
+        if(callback) callback({data: file});
+      });
+    else {
+      file.path = path.basename(file.path);
       if(callback) callback({data: file});
-    });
+    }
   },
   resolveImage: function(c, sender, callback) {
     var filepath = path.join(this.config.uploadsDir, c.target);
-    if(c.width || c.height) {
-      var resizedFilepath = path.join(this.config.uploadsDir, ".cache", c.target, c.width+"x"+c.height);
-
-      fs.exists(resizedFilepath, function(exists) {
-        if(!exists) {
-          mkdirp(path.dirname(resizedFilepath), function(err){
-            if(err) throw err;
-            var resizeOptions = _.extend({
-              srcPath: filepath,
-              dstPath: resizedFilepath
-            }, c);
-            im.resize(resizeOptions, function(err, stdout, stderr){
-              if(err) throw err;
-              if(callback) callback({data: resizedFilepath});
-            })  
-          });
+    var self = this;
+    if(c.width || c.height || c['max-width'] || c['max-height']) {
+      im.identify(filepath, function(err, features){
+        if( (c["max-width"] && parseInt(c["max-width"]) < features.width) ||
+            (c["max-height"] && parseInt(c["max-height"]) < features.height) ){
+          if(c["max-width"])
+            c.width = c["max-width"];
+          if(c["max-height"])
+            c.height = c["max-height"];
+          self.resizeImage(c, sender, callback);
         } else
-          if(callback) callback({data: resizedFilepath});
-      });
+        if(c.width || c.height)
+          self.resizeImage(c, sender, callback);
+        else
+          if(callback) callback({data: filepath});
+      })
     } else
       if(callback) callback({data: filepath});
+  },
+  resizeImage: function(c, sender, callback) {
+    var filepath = path.join(this.config.uploadsDir, c.target);
+    var resizedFilepath = path.join(this.config.uploadsDir, ".cache", c.target, c.width+"x"+c.height);
+
+    fs.exists(resizedFilepath, function(exists) {
+      if(!exists) {
+        mkdirp(path.dirname(resizedFilepath), function(err){
+          if(err) throw err;
+          var resizeOptions = _.extend({
+            srcPath: filepath,
+            dstPath: resizedFilepath
+          }, c);
+          
+          // clean up width & height from options if not defined 
+          // otherwise resize method fails.
+          if(typeof resizeOptions.width == "undefined")
+            delete resizeOptions.width;
+          if(typeof resizeOptions.height == "undefined")
+            delete resizeOptions.height;
+
+          im.resize(resizeOptions, function(err, stdout, stderr){
+            if(err) throw err;
+            if(callback) callback({data: resizedFilepath});
+          })  
+        });
+      } else
+        if(callback) callback({data: resizedFilepath});
+    });
   }
 });

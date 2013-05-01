@@ -28,7 +28,7 @@ describe("test imgsizer store", function(){
     }, this, function(c){
       var expectedDestPath = imgsizerDNA.uploadsDir+"/img1";
       expect(fs.existsSync(expectedDestPath)).toBe(true);
-      expect(c.data.path).toBe(expectedDestPath);
+      expect(c.data.path).toBe("img1");
       next();
     });
   })
@@ -47,6 +47,18 @@ describe("test imgsizer store", function(){
     imgsizer.resolveImage({
       target: "img1",
       width: "100"
+    }, this, function(c){
+      var expectedDestPath = imgsizerDNA.uploadsDir+"/.cache/img1/100xundefined";
+      expect(c.data).toBe(expectedDestPath);
+      expect(fs.existsSync(expectedDestPath)).toBe(true);
+      next();
+    })  
+  })
+
+  it("resolveImage path resized to max width", function(next){
+    imgsizer.resolveImage({
+      target: "img1",
+      "max-width": "100"
     }, this, function(c){
       var expectedDestPath = imgsizerDNA.uploadsDir+"/.cache/img1/100xundefined";
       expect(c.data).toBe(expectedDestPath);
