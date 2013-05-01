@@ -11,6 +11,56 @@ var ncp = require('ncp');
 var mkdirp = require("mkdirp");
 var shelljs = require("shelljs");
 
+/* organel | Imgsizer
+
+Organel responsible for generating and resolving paths to resized images. It wraps node-imagemagick module for resizing.
+
+Upon organelle's construction the destination uploadsDir is automatically created.
+
+
+
+* `uploadsDir` : process.cwd()+"/uploads"
+
+  full path to directory which will contain any handled images. Resized cache of images are stored there too.*/
+
+/* incoming | Imgsizer:handleImage 
+
+Instructs the organelle to move the file to its configured `uploadsDir` if not present there.
+
+* `target`: String
+
+  path to image stored in the local file system
+
+#### callback
+
+* `data`
+
+  * `path` : relative path to the `uploadsDir`*/
+
+/* incoming | Imgsizer:resolveImage 
+
+Instructs the organelle to resolve the given image as full path.
+
+* `target` : String
+
+  which image should be resolved. This is the value returned by `Imgsizer:handleImage` reaction.
+
+* width : String
+
+  *optional*, instructs resize by width in pixels.
+
+* height : String
+
+  *optional*, instructs resize by height in pixels.
+
+* max-width: String
+
+  *optional*, instructs resize by width in pixels only if the image is above given value.
+
+* max-height: String
+
+  *optional*, instructs resize by height in pixels only if the image is above given value.*/
+
 module.exports = Organel.extend(function Imgsizer(plasma, config, parent){
   Organel.call(this, plasma, config, parent);
 
