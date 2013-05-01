@@ -9,7 +9,10 @@
   },
   "dependencies": {
     "organic": "latest",
+    "underscore": "latest",
     "imagemagick": "latest",
+    "ncp": "latest",
+    "mkdirp": "latest",
     "shelljs": "latest"
   },  
   "repository": "",

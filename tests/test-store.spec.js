@@ -1,5 +1,5 @@
 var fs = require('fs');
-var shelljs = require("shelljs");
+var shelljs = require('shelljs');
 
 describe("test imgsizer store", function(){
   var Plasma = require("organic").Plasma;
@@ -12,10 +12,8 @@ describe("test imgsizer store", function(){
     uploadsDir: __dirname+"/uploads"
   }
 
-  var testFiles = {
-    "file": {
-      path: __dirname+"/data/img1"
-    }
+  var testFile = {
+    path: __dirname+"/data/img1"
   }
 
   it("instantiates organelle", function(next){
@@ -24,13 +22,13 @@ describe("test imgsizer store", function(){
     next();
   });
 
-  it("posts some files already stored to organelle", function(next){
-    imgsizer.handleImages({
-      files: testFiles
+  it("send image to organelle", function(next){
+    imgsizer.handleImage({
+      target: testFile
     }, this, function(c){
       var expectedDestPath = imgsizerDNA.uploadsDir+"/img1";
       expect(fs.existsSync(expectedDestPath)).toBe(true);
-      expect(c.data['file'].path).toBe(expectedDestPath);
+      expect(c.data.path).toBe(expectedDestPath);
       next();
     });
   })
@@ -41,6 +39,7 @@ describe("test imgsizer store", function(){
     }, this, function(c){
       var expectedDestPath = imgsizerDNA.uploadsDir+"/img1";
       expect(c.data).toBe(expectedDestPath);
+      next();
     })
   })
 
@@ -49,7 +48,7 @@ describe("test imgsizer store", function(){
       target: "img1",
       width: "100"
     }, this, function(c){
-      var expectedDestPath = imgsizerDNA.uploadsDir+"/.cache/img1_100x";
+      var expectedDestPath = imgsizerDNA.uploadsDir+"/.cache/img1/100xundefined";
       expect(c.data).toBe(expectedDestPath);
       expect(fs.existsSync(expectedDestPath)).toBe(true);
       next();
@@ -57,7 +56,7 @@ describe("test imgsizer store", function(){
   })
 
   it("tears down", function(next){
-    shelljs.rmdir('-rf', imgsizerDNA.uploadsDir);
+    shelljs.rm('-rf', imgsizerDNA.uploadsDir);
     next();
   })
 })
