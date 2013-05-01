@@ -32,13 +32,13 @@ module.exports = Organel.extend(function Imgsizer(plasma, config, parent){
     var dest = path.join(this.config.uploadsDir, path.basename(file.path));
     if(file.path !== dest)
       ncp(file.path, dest, function(err){
-        if(err) throw err;
+        if(err) return callback(err);
         file.path = path.basename(file.path);  
-        if(callback) callback({data: file});
+        callback({data: file});
       });
     else {
       file.path = path.basename(file.path);
-      if(callback) callback({data: file});
+      callback({data: file});
     }
   },
   resolveImage: function(c, sender, callback) {
@@ -49,6 +49,8 @@ module.exports = Organel.extend(function Imgsizer(plasma, config, parent){
     else
     if(c['max-width'] || c['max-height'])
       im.identify(filepath, function(err, features){
+        if(err) return callback(err);
+
         if( (c["max-width"] && parseInt(c["max-width"]) < features.width) ||
             (c["max-height"] && parseInt(c["max-height"]) < features.height) ){
           if(c["max-width"])
@@ -57,10 +59,10 @@ module.exports = Organel.extend(function Imgsizer(plasma, config, parent){
             c.height = c["max-height"];
           self.resizeImage(c, sender, callback);
         } else
-          if(callback) callback({data: filepath});
+          callback({data: filepath});
       })
     else
-      if(callback) callback({data: filepath});
+      callback({data: filepath});
   },
   resizeImage: function(c, sender, callback) {
     var filepath = path.join(this.config.uploadsDir, c.target);
@@ -69,7 +71,8 @@ module.exports = Organel.extend(function Imgsizer(plasma, config, parent){
     fs.exists(resizedFilepath, function(exists) {
       if(!exists) {
         mkdirp(path.dirname(resizedFilepath), function(err){
-          if(err) throw err;
+          if(err) return callback(err);
+
           var resizeOptions = _.extend({
             srcPath: filepath,
             dstPath: resizedFilepath
@@ -83,12 +86,12 @@ module.exports = Organel.extend(function Imgsizer(plasma, config, parent){
             delete resizeOptions.height;
 
           im.resize(resizeOptions, function(err, stdout, stderr){
-            if(err) throw err;
-            if(callback) callback({data: resizedFilepath});
+            if(err) return callback(err);
+            callback({data: resizedFilepath});
           })  
         });
       } else
-        if(callback) callback({data: resizedFilepath});
+        callback({data: resizedFilepath});
     });
   }
 });
