@@ -97,21 +97,27 @@ module.exports = Organel.extend(function Imgsizer(plasma, config, parent){
     if(c.width || c.height)
       self.resizeImage(c, sender, callback);
     else
-    if(c['max-width'] || c['max-height'])
-      im.identify(filepath, function(err, features){
-        if(err) return callback(err);
+    if(c['max-width'] || c['max-height']) {
+      var cacheFilepath = path.join(this.config.uploadsDir, ".cache", c.target, c["max-width"]+"x"+c["max-height"]);
+      fs.exists(cacheFilepath, function(exists){
+        if(exists)
+          return callback({data: cacheFilepath});
 
-        if( (c["max-width"] && parseInt(c["max-width"]) < features.width) ||
-            (c["max-height"] && parseInt(c["max-height"]) < features.height) ){
-          if(c["max-width"])
-            c.width = c["max-width"];
-          if(c["max-height"])
-            c.height = c["max-height"];
-          self.resizeImage(c, sender, callback);
-        } else
-          callback({data: filepath});
+        im.identify(filepath, function(err, features){
+          if(err) return callback(err);
+
+          if( (c["max-width"] && parseInt(c["max-width"]) < features.width) ||
+              (c["max-height"] && parseInt(c["max-height"]) < features.height) ){
+            if(c["max-width"])
+              c.width = c["max-width"];
+            if(c["max-height"])
+              c.height = c["max-height"];
+            self.resizeImage(c, sender, callback);
+          } else
+            callback({data: filepath});
+        })  
       })
-    else
+    } else
       callback({data: filepath});
   },
   resizeImage: function(c, sender, callback) {
@@ -119,33 +125,34 @@ module.exports = Organel.extend(function Imgsizer(plasma, config, parent){
     var resizedFilepath = path.join(this.config.uploadsDir, ".cache", c.target, c.width+"x"+c.height);
 
     fs.exists(resizedFilepath, function(exists) {
-      if(!exists) {
-        mkdirp(path.dirname(resizedFilepath), function(err){
+      if(exists)
+        return callback({data: resizedFilepath});
+      
+      mkdirp(path.dirname(resizedFilepath), function(err){
+        if(err) return callback(err);
+
+        var resizeOptions = _.extend({
+          srcPath: filepath,
+          dstPath: resizedFilepath
+        }, c);
+        
+        // clean up width & height from options if not defined 
+        // otherwise resize method fails.
+        if(typeof resizeOptions.width == "undefined")
+          delete resizeOptions.width;
+        if(typeof resizeOptions.height == "undefined")
+          delete resizeOptions.height;
+
+        im.resize(resizeOptions, function(err, stdout, stderr){
           if(err) return callback(err);
-
-          var resizeOptions = _.extend({
-            srcPath: filepath,
-            dstPath: resizedFilepath
-          }, c);
-          
-          // clean up width & height from options if not defined 
-          // otherwise resize method fails.
-          if(typeof resizeOptions.width == "undefined")
-            delete resizeOptions.width;
-          if(typeof resizeOptions.height == "undefined")
-            delete resizeOptions.height;
-
-          im.resize(resizeOptions, function(err, stdout, stderr){
-            if(err) return callback(err);
-            if(c["max-width"] || c["max-height"])
-              fs.symlink(resizedFilepath, path.join(path.dirname(resizedFilepath),c["max-width"]+"x"+c["max-width"]), function(err){
-                if(err) console.error(err);
-              });
-            callback({data: resizedFilepath});
-          })
-        });
-      } else
-        callback({data: resizedFilepath});
+          if(c["max-width"] || c["max-height"])
+            fs.symlink(resizedFilepath, path.join(path.dirname(resizedFilepath),c["max-width"]+"x"+c["max-width"]), function(err){
+              if(err) console.error(err);
+            });
+          callback({data: resizedFilepath});
+        })
+      });
+        
     });
   }
 });
