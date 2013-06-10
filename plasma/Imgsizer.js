@@ -148,8 +148,10 @@ module.exports = Organel.extend(function Imgsizer(plasma, config, parent){
           if(c["max-width"] || c["max-height"])
             fs.symlink(resizedFilepath, path.join(path.dirname(resizedFilepath),c["max-width"]+"x"+c["max-width"]), function(err){
               if(err) console.error(err);
+              callback({data: resizedFilepath});
             });
-          callback({data: resizedFilepath});
+          else
+            callback({data: resizedFilepath});
         })
       });
         
